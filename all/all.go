@@ -1,3 +1,19 @@
+// Package "all" contains constants to (maybe) all nerd-font icons.
+// This file is based on the CSS resulting from building the font,
+// and may need to be updated sometime.
+// The idea is to use the same names from the fonts in order to make icons easy to find.
+// Dashes have been removed (you can't use dashes in an identifier) and names have been
+// rewritten using go's stupid camelCase naming convention(1).
+//
+// I know, it looks awful!
+// Thankfully it will look better when I re-write this in Rust 🦀
+//
+// 1. Why? It's just a convention, and I could've written the names using snake_case, or
+//    even a mixture of both, etc.
+//    But I don't know who may end up using this package, and some gophers are really not
+//    willing to accept other naming conventions. So. Just to help others in keeping the names
+//    consistent within their codebase.
+//    BTW the underscore was necesary to separate the "group" from the icon name.
 package all
 
 const (
