@@ -3,6 +3,8 @@
 
 import curses
 import locale
+import sys
+
 from icons import icons
 import ui
 import search
@@ -12,6 +14,10 @@ for k in icons.keys():
     if len(k) > MAX_NAME_LEN:
         MAX_NAME_LEN = len(k)
 
+search_func = search.simple_search
+for arg in sys.argv:
+    if arg == "-fuzzy":
+        search_func = search.fuzzy_search
 
 def main(_):
     """Do stuff!"""
@@ -62,7 +68,7 @@ def main(_):
     while True:
         pattern = "".join(search_content)
 
-        findings = search.fuzzy_search(icons, pattern, (results_h - 2) // 2)
+        findings = search_func(icons, pattern, (results_h - 2) // 2)
 
         results.clear()
 
