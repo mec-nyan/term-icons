@@ -4,6 +4,7 @@
 import curses
 import locale
 from icons import icons
+import ui
 
 MAX_NAME_LEN = 0
 for k in icons.keys():
@@ -85,7 +86,8 @@ def main(_):
 
         results.refresh()
         outer.clear()
-        outer.box()
+        ui.rounded_box(outer)
+
         outer.addstr(1, 2, pattern)
         c = outer.getch()
         c = chr(c)
