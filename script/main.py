@@ -65,18 +65,21 @@ def main(_):
         findings = search.fuzzy_search(icons, pattern, (results_h - 2) // 2)
 
         results.clear()
+
         display_results_w = MAX_NAME_LEN + 4
         padding = (width - display_results_w) // 2
         for i in range(len(findings)):
             if i < results_h:
-                results.addstr(1 + i * 2, padding, findings[i])
-                results.move(1 + i * 2, padding + MAX_NAME_LEN)
-                # NOTE: for some reason, icons are displayed correctly when
-                # "results" has a bg set ???
-                icon = icons[findings[i]]
-                for c in icon:
-                    results.addch(c)
-                results.addch(" ")
+                results.move(1 + i * 2, padding)
+                pos = 0
+                for letter in findings[i]:
+                    if pos < len(pattern) and letter == pattern[pos]:
+                        results.addch(letter, green_fg)
+                        pos += 1
+                    else:
+                        results.addch(letter)
+                results.addstr(1 + i * 2, padding + MAX_NAME_LEN, icons[findings[i]])
+
 
         results.refresh()
         outer.clear()
