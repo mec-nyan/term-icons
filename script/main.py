@@ -23,6 +23,45 @@ for arg in sys.argv:
         search_func = search.fuzzy_search
 
 
+welcome_msg = """\
+        Welcome, traveller!
+
+        This tool will help you find your favourite
+        icons by name or description. Enjoy!
+
+
+        Just type something to begin searching.
+
+
+        <C-n> Next element on the result list.
+
+        <C-p> Previous element on the result lits.
+
+        <Enter> Copy selection to clipboard.
+
+        Use `:` to enter commands.
+
+        Use `/` to go back to search mode.
+
+        """
+
+class Tipper():
+    index = 0
+    tips = [
+            # Tips to show when there's no results.
+            #TODO: Add more and better tips.
+            "Are you sure that's how you spell it?",
+            "Sorry, couldn't find that thing...",
+            "Try again!",
+            "Maybe you could try a fuzzy search",
+            ]
+    def next_tip(self):
+        self.index += 1
+        if self.index == len(self.tips):
+            self.index = 0
+        return self.tips[self.index]
+
+
 def main(_):
     """Do stuff!"""
 
@@ -74,6 +113,7 @@ def main(_):
 
     search_content = []
     selected = 0
+    tipper = Tipper()
     while True:
         pattern = "".join(search_content)
 
@@ -81,10 +121,20 @@ def main(_):
 
         results.clear()
 
+        # TODO: Maybe add a separate window for Help.
+        if not findings and not pattern:
+            msg = welcome_msg.split("\n")
+            for i in range(len(msg)):
+                results.addstr(2 + i, 0, msg[i].strip().center(width))
+
+        if pattern and not findings:
+            results.addstr(2, 0, tipper.next_tip().center(width))
+
         display_results_w = MAX_KEY_LEN + unicode_w + icon_w + separator_w * 2
         padding = (width - display_results_w) // 2
         name_col = padding
         icon_col = name_col + MAX_KEY_LEN + separator_w
+
         for i in range(len(findings)):
             selected_attr = 0
             if i < results_h:
