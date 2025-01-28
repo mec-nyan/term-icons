@@ -45,16 +45,18 @@ welcome_msg = """\
 
         """
 
-class Tipper():
+
+class Tipper:
     index = 0
     tips = [
-            # Tips to show when there's no results.
-            #TODO: Add more and better tips.
-            "Are you sure that's how you spell it?",
-            "Sorry, couldn't find that thing...",
-            "Try again!",
-            "Maybe you could try a fuzzy search",
-            ]
+        # Tips to show when there's no results.
+        # TODO: Add more and better tips.
+        "Are you sure that's how you spell it?",
+        "Sorry, couldn't find that thing...",
+        "Try again!",
+        "Maybe you could try a fuzzy search",
+    ]
+
     def next_tip(self):
         self.index += 1
         if self.index == len(self.tips):
@@ -80,14 +82,21 @@ def main(_):
     curses.init_pair(1, 48, -1)
     green_fg = curses.color_pair(1)
 
-    curses.init_pair(2, 75, -1)
-    results_fg = curses.color_pair(2)
+    curses.init_pair(2, 35, -1)
+    dark_green_fg = curses.color_pair(2)
+
+    curses.init_pair(3, 75, -1)
+    results_fg = curses.color_pair(3)
+
+    curses.init_pair(4, 221, -1)
+    cmd_fg = curses.color_pair(4)
 
     # Title
     title_h = 5
     title_w = curses.newwin(title_h, width, 0, 0)
-    title_w.addstr("Press <ESC> to quit")
+    little_help = "Type to search    <ESC> quits    ':help<Enter>' for help"
     title_w.bkgdset(green_fg)
+    title_w.addstr(little_help.center(width), dark_green_fg)
     title = "Search  "
     title_w.addstr(3, ((width - len(title)) // 2), title)
     title_w.refresh()
@@ -103,9 +112,12 @@ def main(_):
 
     # Search result
     results_y = bar_y + bar_h
-    results_h = height - results_y
+    results_h = height - (results_y + 2)  # leave space for the status line.
     results = curses.newwin(results_h, width, results_y, 0)
     results.bkgdset(results_fg)
+
+    status_line = curses.newwin(1, width, height - 2, 0)
+    status_line.bkgdset(dark_green_fg)
 
     icon_w = 2  # Full width icon plus next space to flow into.
     unicode_w = 10  # "U+" + a maximum of 8 hex digits.
@@ -118,6 +130,17 @@ def main(_):
         pattern = "".join(search_content)
 
         findings = search_func(icons, pattern, (results_h - 2) // 2)
+
+        status_line.clear()
+        if pattern:
+            status_line.addstr(
+                0,
+                2,
+                f'Found {len(findings)} item{len(findings)>1 and 's' or ''} matching "{pattern}"'.center(
+                    width - 4
+                ),
+            )
+        status_line.refresh()
 
         results.clear()
 
