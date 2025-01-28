@@ -5,6 +5,7 @@ def simple_search(icons, pattern, max_el):
     """Icon name contains pattern."""
 
     findings = []
+    # TODO: split pattern by " " and match all words.
     for k in icons.keys():
         if k.find(pattern) > 0:
             findings.append(k)

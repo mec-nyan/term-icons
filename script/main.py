@@ -10,22 +10,25 @@ import ui
 import search
 import clip
 
-MAX_NAME_LEN = 0
+# Find the longest string in the keys of icons.
+MAX_KEY_LEN = 0
 for k in icons.keys():
-    if len(k) > MAX_NAME_LEN:
-        MAX_NAME_LEN = len(k)
+    if len(k) > MAX_KEY_LEN:
+        MAX_KEY_LEN = len(k)
 
+# Search function to use. Exact match by default.
 search_func = search.simple_search
 for arg in sys.argv:
     if arg == "-fuzzy":
         search_func = search.fuzzy_search
+
 
 def main(_):
     """Do stuff!"""
 
     locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
-    MIN_DIM = (25, MAX_NAME_LEN + 4)
+    MIN_DIM = (25, MAX_KEY_LEN + 4)
     screen = curses.newwin(0, 0, 0, 0)
     height, width = screen.getmaxyx()
 
@@ -65,6 +68,10 @@ def main(_):
     results = curses.newwin(results_h, width, results_y, 0)
     results.bkgdset(results_fg)
 
+    icon_w = 2  # Full width icon plus next space to flow into.
+    unicode_w = 10  # "U+" + a maximum of 8 hex digits.
+    separator_w = 2  # haw many spaces between fields/columns.
+
     search_content = []
     selected = 0
     while True:
@@ -74,22 +81,35 @@ def main(_):
 
         results.clear()
 
-        display_results_w = MAX_NAME_LEN + 4
+        display_results_w = MAX_KEY_LEN + unicode_w + icon_w + separator_w * 2
         padding = (width - display_results_w) // 2
+        name_col = padding
+        icon_col = name_col + MAX_KEY_LEN + separator_w
         for i in range(len(findings)):
+            selected_attr = 0
             if i < results_h:
-                results.move(1 + i * 2, padding)
+                if i == selected:
+                    # Highglight selected line.
+                    # TODO: Use a better approach (i.e. change the line bg).
+                    selected_attr = curses.A_REVERSE
+                row = 1 + i * 2
+                results.move(row, name_col)
                 pos = 0
+
+                # icon name.
                 for letter in findings[i]:
                     if pos < len(pattern) and letter == pattern[pos]:
-                        results.addch(letter, green_fg)
+                        results.addch(letter, green_fg | selected_attr)
                         pos += 1
                     else:
-                        results.addch(letter)
-                results.addstr(1 + i * 2, padding + MAX_NAME_LEN, icons[findings[i]])
+                        results.addch(letter, selected_attr)
+
+                icon = icons[findings[i]]
+                unicode = hex(ord(icon))
+                unicode = unicode.replace("0x", "U+")
+                results.addstr(row, icon_col, f"{icon:2}  {unicode:>10}")
                 if i == selected:
                     results.addstr("  *", curses.A_BOLD | green_fg)
-
 
         results.refresh()
         outer.clear()
@@ -108,16 +128,16 @@ def main(_):
             selected = 0
             if len(search_content):
                 search_content.pop()
-        elif c == '':
-            if selected < len(findings)-1:
+        elif c == "":
+            if selected < len(findings) - 1:
                 selected += 1
             else:
                 selected = 0
-        elif c == '':
+        elif c == "":
             if selected > 0:
                 selected -= 1
             else:
-                selected = len(findings)-1
+                selected = len(findings) - 1
         elif c == "\n":
             clip.to_clipboard(icons[findings[selected]])
 
