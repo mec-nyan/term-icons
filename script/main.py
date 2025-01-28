@@ -24,26 +24,43 @@ for arg in sys.argv:
 
 
 welcome_msg = """\
-        Welcome, traveller!
+Welcome, traveller!
 
-        This tool will help you find your favourite
-        icons by name or description. Enjoy!
-
-
-        Just type something to begin searching.
+This tool will help you find your favourite
+icons by name or description.
+Enjoy!
 
 
-        <C-n> Next element on the result list.
+Just type something to begin searching.
 
-        <C-p> Previous element on the result lits.
 
-        <Enter> Copy selection to clipboard.
+<C-n> Next element on the result list.
 
-        Use `:` to enter commands.
+<C-p> Previous element on the result lits.
 
-        Use `/` to go back to search mode.
+<Enter> Copy selection to clipboard.
 
-        """
+Use `:` to enter commands.
+
+Use `/` to go back to search mode.
+""".split("\n")
+
+command_msg = """\
+Your search is saved.
+Press / to go back.
+
+Or type a command and hit <Enter>
+
+Available commands
+
+:help
+:exact
+:fuzzy
+:show list
+:show grid
+:go back
+:quit
+""".split("\n")
 
 
 class Tipper:
@@ -85,21 +102,23 @@ def main(_):
     curses.init_pair(2, 35, -1)
     dark_green_fg = curses.color_pair(2)
 
-    curses.init_pair(3, 75, -1)
+    curses.init_pair(3, 104, -1)
     results_fg = curses.color_pair(3)
 
     curses.init_pair(4, 221, -1)
     cmd_fg = curses.color_pair(4)
 
+    curses.init_pair(5, 105, -1)
+    tip_fg = curses.color_pair(5)
+
+    curses.init_pair(6, 172, -1)
+    cmd_tip_fg = curses.color_pair(6)
+
     # Title
     title_h = 5
     title_w = curses.newwin(title_h, width, 0, 0)
     little_help = "Type to search    <ESC> quits    ':help<Enter>' for help"
-    title_w.bkgdset(green_fg)
-    title_w.addstr(little_help.center(width), dark_green_fg)
-    title = "Search  "
-    title_w.addstr(3, ((width - len(title)) // 2), title)
-    title_w.refresh()
+    title = {"search": "Search  ", "command": "Command  "}
 
     # Search bar
     bar_h, bar_w = 3, 40
@@ -107,7 +126,6 @@ def main(_):
     bar_y = 5
 
     outer = curses.newwin(bar_h, bar_w, bar_y, bar_x)
-    outer.bkgdset(green_fg)
     outer.refresh()
 
     # Search result
@@ -124,15 +142,29 @@ def main(_):
     separator_w = 2  # haw many spaces between fields/columns.
 
     search_content = []
+    saved = []
     selected = 0
     tipper = Tipper()
+    mode = "search"
     while True:
+        title_w.clear()
+        title_w.addstr(little_help.center(width), tip_fg)
+        if mode == "search":
+            title_w.bkgdset(green_fg)
+            title_w.addstr(3, ((width - len(title["search"])) // 2), title["search"])
+            title_w.refresh()
+            outer.bkgdset(green_fg)
+        elif mode == "command":
+            title_w.bkgdset(cmd_fg)
+            title_w.addstr(3, ((width - len(title["command"])) // 2), title["command"])
+            title_w.refresh()
+            outer.bkgdset(cmd_fg)
         pattern = "".join(search_content)
 
         findings = search_func(icons, pattern, (results_h - 2) // 2)
 
         status_line.clear()
-        if pattern:
+        if pattern and mode == "search":
             status_line.addstr(
                 0,
                 2,
@@ -140,18 +172,28 @@ def main(_):
                     width - 4
                 ),
             )
+
+        if mode == "command":
+            status_line.addstr(0, 2, "cmd".center(width - 4), cmd_fg)
         status_line.refresh()
 
         results.clear()
 
         # TODO: Maybe add a separate window for Help.
         if not findings and not pattern:
-            msg = welcome_msg.split("\n")
-            for i in range(len(msg)):
-                results.addstr(2 + i, 0, msg[i].strip().center(width))
+            for i in range(len(welcome_msg)):
+                if i < 5:
+                    results.addstr(2 + i, 0, welcome_msg[i].center(width))
+                else:
+                    results.addstr(2 + i, bar_x, welcome_msg[i])
 
-        if pattern and not findings:
+        if pattern and not findings and mode == "search":
             results.addstr(2, 0, tipper.next_tip().center(width))
+
+        if mode == "command":
+            # results.bkgdset(cmd_tip_fg)
+            for i in range(len(command_msg)):
+                results.addstr(2 + i, bar_x, command_msg[i])
 
         display_results_w = MAX_KEY_LEN + unicode_w + icon_w + separator_w * 2
         padding = (width - display_results_w) // 2
@@ -164,7 +206,7 @@ def main(_):
                 if i == selected:
                     # Highglight selected line.
                     # TODO: Use a better approach (i.e. change the line bg).
-                    selected_attr = curses.A_REVERSE
+                    selected_attr = curses.A_REVERSE | curses.A_BOLD
                 row = 1 + i * 2
                 results.move(row, name_col)
                 pos = 0
@@ -180,7 +222,8 @@ def main(_):
                 icon = icons[findings[i]]
                 unicode = hex(ord(icon))
                 unicode = unicode.replace("0x", "U+")
-                results.addstr(row, icon_col, f"{icon:2}  {unicode:>10}")
+                results.addstr(row, icon_col, f"{icon:2}  ", green_fg)
+                results.addstr(f"{unicode:>10}")
                 if i == selected:
                     results.addstr("  *", curses.A_BOLD | green_fg)
 
@@ -201,6 +244,8 @@ def main(_):
             selected = 0
             if len(search_content):
                 search_content.pop()
+            if mode == "command" and not len(search_content):
+                mode = "search"
         elif c == "":
             if selected < len(findings) - 1:
                 selected += 1
@@ -212,7 +257,19 @@ def main(_):
             else:
                 selected = len(findings) - 1
         elif c == "\n":
-            clip.to_clipboard(icons[findings[selected]])
+            if mode == "search":
+                clip.to_clipboard(icons[findings[selected]])
+            elif mode == "command":
+                #TODO: execute command or give help.
+                pass
+        elif c == ":":
+            saved = search_content[:]
+            search_content = [":"]
+            mode = "command"
+        elif c == "/":
+            search_content = saved[:]
+            saved = []  # Is this really necessary?
+            mode = "search"
 
 
 if __name__ == "__main__":
