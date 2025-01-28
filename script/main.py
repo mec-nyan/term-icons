@@ -8,6 +8,7 @@ import sys
 from icons import icons
 import ui
 import search
+import clip
 
 MAX_NAME_LEN = 0
 for k in icons.keys():
@@ -65,6 +66,7 @@ def main(_):
     results.bkgdset(results_fg)
 
     search_content = []
+    selected = 0
     while True:
         pattern = "".join(search_content)
 
@@ -85,6 +87,8 @@ def main(_):
                     else:
                         results.addch(letter)
                 results.addstr(1 + i * 2, padding + MAX_NAME_LEN, icons[findings[i]])
+                if i == selected:
+                    results.addstr("  *", curses.A_BOLD | green_fg)
 
 
         results.refresh()
@@ -95,13 +99,27 @@ def main(_):
         c = outer.getch()
         c = chr(c)
         if c.isalnum() or c in " -_":
+            selected = 0
             if len(search_content) < bar_w - 4:
                 search_content.append(c)
         if c == "\x1b":
             break
         elif c in ["\x7f", ""]:
+            selected = 0
             if len(search_content):
                 search_content.pop()
+        elif c == '':
+            if selected < len(findings)-1:
+                selected += 1
+            else:
+                selected = 0
+        elif c == '':
+            if selected > 0:
+                selected -= 1
+            else:
+                selected = len(findings)-1
+        elif c == "\n":
+            clip.to_clipboard(icons[findings[selected]])
 
 
 if __name__ == "__main__":
