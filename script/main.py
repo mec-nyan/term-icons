@@ -81,7 +81,7 @@ class Tipper:
         return self.tips[self.index]
 
 
-def main(_):
+def main(screen):
     """Do stuff!"""
 
     locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -94,25 +94,64 @@ def main(_):
         raise "Screen is too small to do stuff!"
 
     curses.start_color()
-    curses.use_default_colors()
 
-    curses.init_pair(1, 48, -1)
-    green_fg = curses.color_pair(1)
+    palette = {
+            "background": (55, 62, 72),
+            "search": (95, 211, 188),
+            "command": (255, 230, 128),
+            "results": (170, 135, 222),
+            "tips": (135, 170, 222),
+            }
 
-    curses.init_pair(2, 35, -1)
-    dark_green_fg = curses.color_pair(2)
+    def to_curses_colour(c):
+        return int((1000 / 255) * c)
 
-    curses.init_pair(3, 104, -1)
-    results_fg = curses.color_pair(3)
+    def to_curses_rgb(r, g, b):
+        rr = to_curses_colour(r)
+        gg = to_curses_colour(g)
+        bb = to_curses_colour(b)
+        return (rr, gg, bb)
 
-    curses.init_pair(4, 221, -1)
-    cmd_fg = curses.color_pair(4)
+    if curses.can_change_color():
+        curses.init_color(231, *to_curses_rgb(*palette["background"]))
+        curses.init_color(232, *to_curses_rgb(*palette["search"]))
+        curses.init_color(233, *to_curses_rgb(*palette["command"]))
+        curses.init_color(234, *to_curses_rgb(*palette["results"]))
+        curses.init_color(235, *to_curses_rgb(*palette["tips"]))
+        curses.init_pair(1, 232, 231)
+        search_fg = curses.color_pair(1)
 
-    curses.init_pair(5, 105, -1)
-    tip_fg = curses.color_pair(5)
+        curses.init_pair(2, 233, 231)
+        command_fg = curses.color_pair(2)
 
-    curses.init_pair(6, 172, -1)
-    cmd_tip_fg = curses.color_pair(6)
+        curses.init_pair(3, 235, 231)
+        tips_fg = curses.color_pair(3)
+
+        curses.init_pair(4, 234, 231)
+        results_fg = curses.color_pair(4)
+
+    else:
+        curses.init_pair(1, 48, 0)
+        search_fg = curses.color_pair(1)
+
+        curses.init_pair(2, 35, 0)
+        tips_fg = curses.color_pair(2)
+
+        curses.init_pair(3, 104, 0)
+        results_fg = curses.color_pair(3)
+
+        curses.init_pair(4, 221, 0)
+        command_fg = curses.color_pair(4)
+
+    screen.bkgdset(search_fg)
+    screen.clear()
+    screen.refresh()
+
+    # curses.init_pair(5, 105, -1)
+    # tip_fg = curses.color_pair(5)
+    #
+    # curses.init_pair(6, 172, -1)
+    # cmd_tip_fg = curses.color_pair(6)
 
     # Title
     title_h = 5
@@ -135,7 +174,7 @@ def main(_):
     results.bkgdset(results_fg)
 
     status_line = curses.newwin(1, width, height - 2, 0)
-    status_line.bkgdset(dark_green_fg)
+    status_line.bkgdset(tips_fg)
 
     icon_w = 2  # Full width icon plus next space to flow into.
     unicode_w = 10  # "U+" + a maximum of 8 hex digits.
@@ -147,18 +186,19 @@ def main(_):
     tipper = Tipper()
     mode = "search"
     while True:
+        title_w.bkgdset(tips_fg)
         title_w.clear()
-        title_w.addstr(little_help.center(width), tip_fg)
+        title_w.addstr(little_help.center(width))
         if mode == "search":
-            title_w.bkgdset(green_fg)
+            title_w.bkgdset(search_fg)
             title_w.addstr(3, ((width - len(title["search"])) // 2), title["search"])
-            title_w.refresh()
-            outer.bkgdset(green_fg)
+            title_w.noutrefresh()
+            outer.bkgdset(search_fg)
         elif mode == "command":
-            title_w.bkgdset(cmd_fg)
+            title_w.bkgdset(command_fg)
             title_w.addstr(3, ((width - len(title["command"])) // 2), title["command"])
-            title_w.refresh()
-            outer.bkgdset(cmd_fg)
+            title_w.noutrefresh()
+            outer.bkgdset(command_fg)
         pattern = "".join(search_content)
 
         findings = search_func(icons, pattern, (results_h - 2) // 2)
@@ -174,8 +214,8 @@ def main(_):
             )
 
         if mode == "command":
-            status_line.addstr(0, 2, "cmd".center(width - 4), cmd_fg)
-        status_line.refresh()
+            status_line.addstr(0, 2, "cmd".center(width - 4))
+        status_line.noutrefresh()
 
         results.clear()
 
@@ -214,7 +254,7 @@ def main(_):
                 # icon name.
                 for letter in findings[i]:
                     if pos < len(pattern) and letter == pattern[pos]:
-                        results.addch(letter, green_fg | selected_attr)
+                        results.addch(letter, search_fg | selected_attr)
                         pos += 1
                     else:
                         results.addch(letter, selected_attr)
@@ -222,12 +262,12 @@ def main(_):
                 icon = icons[findings[i]]
                 unicode = hex(ord(icon))
                 unicode = unicode.replace("0x", "U+")
-                results.addstr(row, icon_col, f"{icon:2}  ", green_fg)
+                results.addstr(row, icon_col, f"{icon:2}  ", search_fg)
                 results.addstr(f"{unicode:>10}")
                 if i == selected:
-                    results.addstr("  *", curses.A_BOLD | green_fg)
+                    results.addstr("  *", curses.A_BOLD | search_fg)
 
-        results.refresh()
+        results.noutrefresh()
         outer.clear()
         ui.rounded_box(outer)
 
@@ -256,6 +296,11 @@ def main(_):
                 selected -= 1
             else:
                 selected = len(findings) - 1
+        elif c == "":
+            if mode == "search":
+                search_content.clear()
+            elif mode == "command":
+                search_content = search_content[:1]
         elif c == "\n":
             if mode == "search":
                 clip.to_clipboard(icons[findings[selected]])
@@ -270,6 +315,8 @@ def main(_):
             search_content = saved[:]
             saved = []  # Is this really necessary?
             mode = "search"
+
+        curses.doupdate()
 
 
 if __name__ == "__main__":
