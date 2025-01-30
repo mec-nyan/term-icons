@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
-"""Search icons by word/name."""
+"""Search icons by word/name.
+
+NOTE: Now that the basic functionality is working, I'm gonna heavily refactor this.
+Beware!!!
+
+The idea is that the main function should be pretty simple. Something like:
+
+def main(screen):
+
+    app.start(screen)
+
+    while True:
+        app.update_ui()
+        app.get_input()
+        app.do_stuff()
+
+"""
 
 import curses
 import locale
@@ -82,7 +98,21 @@ class Tipper:
 
 
 def main(screen):
-    """Do stuff!"""
+    """Do stuff!
+
+    WIP!
+    Once encapsulated in App, this funcion will be really simple (see above).
+
+    app = App(screen)
+
+    while True:
+
+        app.update_ui()
+
+        app.get_input()
+
+        app.do_stuff()
+    """
 
     locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
