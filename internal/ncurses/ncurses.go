@@ -46,8 +46,8 @@ func InitScr() {
 
 func AddStr(s string) {
 	cs := C.CString(s)
+	defer C.free(unsafe.Pointer(cs))
 	C.addstr(cs)
-	C.free(unsafe.Pointer(cs))
 }
 
 func Move(y, x int) {
@@ -80,4 +80,89 @@ func GetCh() byte {
 
 func EndWin() {
 	C.endwin()
+}
+
+func ScreenSize() (int, int) {
+	return int(C.LINES), int(C.COLS)
+}
+
+// Windows
+
+// Encapsulate the C.WINDOW* here:
+type Window struct {
+	win           *C.WINDOW
+	Height, Width int
+	Y, X          int
+}
+
+func NewWin(height, width, y, x int) Window {
+	return Window{
+		C.newwin(C.int(height), C.int(width), C.int(y), C.int(x)),
+		height,
+		width,
+		y,
+		x,
+	}
+}
+
+func Box(w Window) {
+	C.box(w.win, 0, 0)
+}
+
+func RoundedBox(w Window) {
+	topleft := "╭"
+	botleft := "╰"
+	topright := "╮"
+	botright := "╯"
+	C.box(w.win, 0, 0)
+	WMove(w, 0, 0)
+	WAddStr(w, topleft)
+
+	WMove(w, 0, w.Width-1)
+	WAddStr(w, topright)
+
+	WMove(w, w.Height-1, 0)
+	WAddStr(w, botleft)
+
+	WMove(w, w.Height-1, w.Width-1)
+	WAddStr(w, botright)
+}
+
+func WAddStr(w Window, s string) {
+	cs := C.CString(s)
+	defer C.free(unsafe.Pointer(cs))
+	C.waddstr(w.win, cs)
+}
+
+func WMove(w Window, y, x int) {
+	C.wmove(w.win, C.int(y), C.int(x))
+}
+
+func WRefresh(w Window) {
+	C.wrefresh(w.win)
+}
+
+func WGetCh(w Window) byte {
+	return byte(C.wgetch(w.win))
+}
+
+// Some colours.
+func HasColours() bool {
+	return bool(C.has_colors())
+}
+
+func StartColour() {
+	C.start_color()
+}
+
+func UseDefaultColours() {
+	C.use_default_colors()
+}
+
+func InitPair(pair, fg, bg int) {
+	C.init_pair(C.short(pair), C.short(fg), C.short(bg))
+}
+
+func SetPair(w Window, pair int) {
+	C.wattron(w.win, C.COLOR_PAIR(C.int(pair)))
 }

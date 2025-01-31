@@ -20,7 +20,15 @@ func main(){
 	Cbreak()
 	NoEcho()
 
+	if HasColours() {
+		StartColour()
+		UseDefaultColours()
+	}
+
+	InitPair(1, 212, -1)
+
 	win := NewWin(3, 20, 0, 0)
+	SetPair(win, 1)
 	RoundedBox(win)
 	WMove(win, 1, 1)
 	// WAddStr(win, "ima window!")
