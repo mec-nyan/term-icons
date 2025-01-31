@@ -1,7 +1,8 @@
 // A "Toy" program.
 //
 // This program is here only to try the wrapper around the ncurses C library.
-// The ideea is to try out ideas and then make the "search.go" app using This// same bindings. NCurses is fun!
+// The ideea is to try out ideas and then make the "search.go" app using This
+// same bindings. NCurses is fun!
 package main
 
 import (
@@ -18,6 +19,20 @@ func main(){
 	InitScr()
 	Cbreak()
 	NoEcho()
+
+	win := NewWin(3, 20, 0, 0)
+	RoundedBox(win)
+	WMove(win, 1, 1)
+	// WAddStr(win, "ima window!")
+	WGetCh(win)
+	WMove(win, 1, 1)
+	WAddStr(win, fmt.Sprintf("WinSize: %d x %d", win.Height, win.Width))
+	WGetCh(win)
+
+	height, width := ScreenSize()
+	Move(2, 8)
+	AddStr(fmt.Sprintf("Term size is %d lines x %d cols", height, width))
+	GetCh()
 
 	Move(4, 8)
 	AddStr("Locale set to: ")
