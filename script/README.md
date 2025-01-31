@@ -2,6 +2,8 @@
 
 A simple CLI app to easily find the desired icon.
 
+![screenshot](./screenshot_early_dev.png)
+
 > [!WARNING]
 > Early stages of development!
 
