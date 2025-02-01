@@ -2,3 +2,4 @@
 *.txt
 __py*
 .clang-format
+*.o

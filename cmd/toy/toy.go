@@ -11,72 +11,79 @@ import (
 	. "github.com/mec-nyan/term-icons/internal/ncurses"
 )
 
-func main(){
+func main() {
 	loc, err := SetLocale(LC_ALL, "en_US.UTF-8")
 	if err != nil {
 		panic(err)
 	}
-	InitScr()
+
+	stdscr := InitScr()
 	Cbreak()
 	NoEcho()
 
-	if HasColours() {
-		StartColour()
-		UseDefaultColours()
+	defer Clean()
+
+	if !HasColours() {
+		return
 	}
 
+	StartColour()
+	UseDefaultColours()
 	InitPair(1, 212, -1)
 
-	win := NewWin(3, 20, 0, 0)
-	SetPair(win, 1)
-	RoundedBox(win)
-	WMove(win, 1, 1)
-	// WAddStr(win, "ima window!")
-	WGetCh(win)
-	WMove(win, 1, 1)
-	WAddStr(win, fmt.Sprintf("WinSize: %d x %d", win.Height, win.Width))
-	WGetCh(win)
+	// NOTE: I may remove the non-qualified versions of "Move", "AddStr", etc.
+	stdscr.Move(2, 8)
+	stdscr.AddStr(fmt.Sprintf("Term size is %d lines x %d cols", stdscr.Height, stdscr.Width))
+	stdscr.GetCh()
 
-	height, width := ScreenSize()
-	Move(2, 8)
-	AddStr(fmt.Sprintf("Term size is %d lines x %d cols", height, width))
-	GetCh()
+	stdscr.Move(4, 8)
+	stdscr.AddStr("Locale set to: ")
+	stdscr.AddStr(loc)
 
-	Move(4, 8)
-	AddStr("Locale set to: ")
-	AddStr(loc)
+	stdscr.Move(5, 8)
+	stdscr.AddStr("> ")
+	x := stdscr.GetCh()
+	stdscr.AddStr("*")
 
-	Move(5, 8)
-	AddStr("> ")
-	x := GetCh()
-	AddStr("*")
+	stdscr.Move(6, 8)
+	stdscr.AddStr("Got: ")
+	stdscr.AddStr(fmt.Sprintf("%c", x))
 
-	Move(6, 8)
-	AddStr("Got: ")
-	AddStr(fmt.Sprintf("%c", x))
-
-	Move(7, 8)
-	AddStr("> ")
+	stdscr.Move(7, 8)
+	stdscr.AddStr("> ")
 
 	buff := []byte{}
 	for {
-		y := GetCh()
+		y := stdscr.GetCh()
 		if y == '\n' {
 			break
 		}
-		AddStr("*")
+		stdscr.AddStr("*")
 		buff = append(buff, y)
 	}
 
-	Move(8, 8)
-	AddStr("Got: ")
-	AddStr(string(buff))
+	stdscr.Move(8, 8)
+	stdscr.AddStr("Got: ")
+	stdscr.AddStr(string(buff))
 
-	Move(9, 8)
-	AddStr("> (quit) ")
+	stdscr.Move(9, 8)
+	stdscr.AddStr("> (next) ")
 
-	GetCh()
+	stdscr.GetCh()
+	stdscr.Clear()
+	stdscr.Refresh()
 
+	win := NewWin(3, 20, 0, 0)
+	win.SetPair(1)
+	win.RoundedBox()
+	win.Move(1, 1)
+	win.GetCh()
+	win.Move(1, 1)
+	win.AddStr(fmt.Sprintf("WinSize: %d x %d", win.Height, win.Width))
+	win.GetCh()
+}
+
+func Clean() {
 	Echo()
 	NoCbreak()
 	EndWin()
