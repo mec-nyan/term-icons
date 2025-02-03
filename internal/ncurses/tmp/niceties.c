@@ -1,9 +1,12 @@
 #include "niceties.h"
+#include <string.h>
+//   WARNING! 
+// This requires a version of ncurses higher thatn 6.2!
 
 const char hline_thin[]		  = "─";
-const char hline_dotted[]	  = "┄";
+const char hline_dotted[]	  = "╌";
 const char hline_fat[]		  = "━";
-const char hline_dotted_fat[] = "┅";
+const char hline_dotted_fat[] = "╍";
 const char hline_double[]	  = "═";
 
 const char vline_thin[]		  = "│";
@@ -32,51 +35,40 @@ const char botright_rounded[] = "╯";
 const char botright_fat[]	  = "┛";
 const char botright_double[]  = "╝";
 
-typedef struct {
-	const char *hl, *vl, *tl, *tr, *bl, *br;
-} BoxChars;
-
-int put_border(WINDOW* win, BoxChars* style) {
+int put_border(WINDOW* win, BorderStyle* style) {
 	int height = getmaxy(win);
 	int width  = getmaxx(win);
 
-	// Draw top and bottom borders:
-	for (int i = 1; i < width - 1; i++) {
-		if (mvwaddstr(win, 0, i, style->hl) == ERR) {
+	wmove(win, 0, 0);
+	if (waddstr(win, style->tl) == ERR)
+		return ERR;
+	if (waddstr(win, style->tr) == ERR)
+		return ERR;
+	wmove(win, 0, 1);
+	for (int i = 0; i < width - 2; i++) {
+		if (winsstr(win, style->hl) == ERR)
 			return ERR;
-		}
-		if (mvwaddstr(win, height - 1, i, style->hl) == ERR) {
-			return ERR;
-		}
 	}
-	// Draw the left and right borders:
+
 	for (int i = 1; i < height - 1; i++) {
-		if (mvwaddstr(win, i, 0, style->vl) == ERR) {
-			return ERR;
-		}
-		if (mvwaddstr(win, i, width - 1, style->vl) == ERR) {
-			return ERR;
-		}
+		mvwaddstr(win, i, 0, style->vl);
+		mvwaddstr(win, i, width - 1, style->vl);
 	}
 
-	// Draw the corners:
-	if (mvwaddstr(win, 0, 0, style->tl) == ERR) {
+	wmove(win, height - 1, 0);
+	if (waddstr(win, style->bl) == ERR)
 		return ERR;
-	}
-	if (mvwaddstr(win, 0, width - 1, style->tr) == ERR) {
+	if (waddstr(win, style->br) == ERR)
 		return ERR;
+	wmove(win, height - 1, 1);
+	for (int i = 0; i < width - 2; i++) {
+		if (winsstr(win, style->hl) == ERR)
+			return ERR;
 	}
-	if (mvwaddstr(win, height - 1, 0, style->bl) == ERR) {
-		return ERR;
-	}
-	if (mvwaddstr(win, height - 1, width - 1, style->br) == ERR) {
-		return ERR;
-	}
-
 	return 0;
 }
 
-BoxChars sharp = {
+BorderStyle border_sharp = {
 	.vl = vline_thin,
 	.hl = hline_thin,
 	.tl = topleft_sharp,
@@ -85,7 +77,7 @@ BoxChars sharp = {
 	.br = botright_sharp,
 };
 
-BoxChars rounded = {
+BorderStyle border_rounded = {
 	.vl = vline_thin,
 	.hl = hline_thin,
 	.tl = topleft_rounded,
@@ -94,7 +86,7 @@ BoxChars rounded = {
 	.br = botright_rounded,
 };
 
-BoxChars dotted = {
+BorderStyle border_dotted = {
 	.vl = vline_dotted,
 	.hl = hline_dotted,
 	.tl = topleft_sharp,
@@ -103,7 +95,7 @@ BoxChars dotted = {
 	.br = botright_sharp,
 };
 
-BoxChars dotted_rounded = {
+BorderStyle border_dotted_rounded = {
 	.vl = vline_thin,
 	.hl = hline_thin,
 	.tl = topleft_rounded,
@@ -112,7 +104,7 @@ BoxChars dotted_rounded = {
 	.br = botright_rounded,
 };
 
-BoxChars fat = {
+BorderStyle border_fat = {
 	.vl = vline_fat,
 	.hl = hline_fat,
 	.tl = topleft_fat,
@@ -121,7 +113,7 @@ BoxChars fat = {
 	.br = botright_fat,
 };
 
-BoxChars fat_dotted = {
+BorderStyle border_fat_dotted = {
 	.vl = vline_dotted_fat,
 	.hl = hline_dotted_fat,
 	.tl = topleft_fat,
@@ -130,7 +122,7 @@ BoxChars fat_dotted = {
 	.br = botright_fat,
 };
 
-BoxChars _double = {
+BorderStyle border_double = {
 	.vl = vline_double,
 	.hl = hline_double,
 	.tl = topleft_double,
@@ -140,29 +132,121 @@ BoxChars _double = {
 };
 
 int sharp_box(WINDOW* win) {
-	return put_border(win, &sharp);
+	return put_border(win, &border_sharp);
 }
 
 int rounded_box(WINDOW* win) {
-	return put_border(win, &rounded);
+	return put_border(win, &border_rounded);
 }
 
 int dotted_box(WINDOW* win) {
-	return put_border(win, &dotted);
+	return put_border(win, &border_dotted);
 }
 
 int dotted_rounded_box(WINDOW* win) {
-	return put_border(win, &dotted_rounded);
+	return put_border(win, &border_dotted_rounded);
 }
 
 int fat_box(WINDOW* win) {
-	return put_border(win, &fat);
+	return put_border(win, &border_fat);
 }
 
 int fat_dotted_box(WINDOW* win) {
-	return put_border(win, &fat_dotted);
+	return put_border(win, &border_fat_dotted);
 }
 
 int double_box(WINDOW* win) {
-	return put_border(win, &_double);
+	return put_border(win, &border_double);
+}
+
+Rect new_rect(RectSize size, RectPos pos) {
+	WINDOW* win = newwin(size.height, size.width, pos.y, pos.x);
+	if (win == NULL) {
+		return (Rect) {
+			.win  = 0,
+			.geom = { .ws = { 0, 0 }, .wp = { 0, 0 } },
+		};
+	}
+	return (Rect) {
+		.win  = win,
+		.geom = { .ws = size, .wp = pos },
+	};
+}
+
+int rect_write(Rect* rect, const char* text) {
+	// TODO: This function is supposed to write properly:
+	// Don't break words (add a newline).
+	// If the text didn't fit inside the rect, write as much as it fits
+	// and return the position of the next word.
+	// Otherwise returns the length of the string so you know it all
+	// has been written.
+	waddstr(rect->win, text);
+	return 0;
+}
+
+void rect_refresh(Rect* rect) {
+	wrefresh(rect->win);
+}
+
+void rect_clear(Rect* rect) {
+	wclear(rect->win);
+}
+
+BorderedRect new_bordered_rect(RectSize size, RectPos pos, Padding pad, BorderStyle style) {
+	RectSize inner_size = {
+		.width	= size.width - (pad.left + pad.right + 2),
+		.height = size.height - (pad.top + pad.bottom + 2),
+	};
+	RectPos inner_pos = {
+		.y = pos.y + 1 + pad.top,
+		.x = pos.x + 1 + pad.left,
+	};
+	return (BorderedRect) {
+		.outer = new_rect(size, pos),
+		.inner = new_rect(inner_size, inner_pos),
+		.style = style,
+	};
+}
+
+int b_rect_border(BorderedRect* brect) {
+	return put_border(brect->outer.win, &brect->style);
+}
+
+int b_rect_title(BorderedRect* rect, int pos, int margin, const char* title) {
+	// Position: -1 == left, 0 == center, 1 == right.
+	// TODO: Use a better function to calculate the length of the text.
+	if (pos < -1 || pos > 1) {
+		return -1;
+	}
+
+	int		width = rect->outer.geom.ws.width;
+	WINDOW* win	  = rect->outer.win;
+
+	int len = strlen(title);
+	if (len + margin > width) {
+		return -1;
+	}
+
+	if (pos == 1) {
+		margin = width - (len + margin);
+	} else if (pos == 0) {
+		margin = (width - len) / 2;
+	}
+
+	mvwaddstr(win, 0, margin, title);
+	return 0;
+}
+
+int b_rect_write(BorderedRect* brect, const char* text) {
+	return rect_write(&brect->inner, text);
+}
+
+void b_rect_refresh(BorderedRect* brect) {
+	rect_refresh(&brect->outer);
+	rect_refresh(&brect->inner);
+}
+
+void b_rect_clear(BorderedRect* brect) {
+	rect_clear(&brect->outer);
+	rect_clear(&brect->inner);
 }
