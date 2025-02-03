@@ -36,6 +36,19 @@ func main() {
 	stdscr.AddStr(fmt.Sprintf("Term size is %d lines x %d cols", stdscr.Height, stdscr.Width))
 	stdscr.GetCh()
 
+	// Get ncurses verson.
+	major, minor := GetNcursesVersion()
+	stdscr.Move(3, 8)
+	stdscr.AddStr(fmt.Sprintf("With Ncurses %d.%d", major, minor))
+	stdscr.GetCh()
+
+	if major != 6 || minor < 2 {
+		stdscr.Move(5, 8)
+		stdscr.AddStr("err: require ncurses version 6.2 or later!")
+		stdscr.GetCh()
+		return
+	}
+
 	stdscr.Move(4, 8)
 	stdscr.AddStr("Locale set to: ")
 	stdscr.AddStr(loc)
