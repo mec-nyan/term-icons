@@ -1,7 +1,11 @@
 #include "niceties.h"
+#include <stdlib.h>
 #include <curses.h>
 #include <locale.h>
 #include <stdio.h>
+#include "icons.h"
+
+void clean();
 
 int main() {
 
@@ -16,10 +20,20 @@ int main() {
 	initscr();
 	cbreak();
 	noecho();
+	curs_set(0);
+	atexit(clean);
 
 	WINDOW* win = newwin(4, 20, 4, 4);
 
+	fat_box(win);
 	mvwaddstr(win, 1, 1, loc);
+	wgetch(win);
+
+	wclear(win);
+	fat_box(win);
+	wmove(win, 1, 1);
+	wprintw(win, "I %s  this stuff!", nf_cod_heart_filled);
+	wgetch(win);
 
 	int border = 0;
 	int c	   = 0;
@@ -66,9 +80,12 @@ int main() {
 	b_rect_refresh(&br);
 	wgetch(br.inner.win);
 
+	return 0;
+}
+
+void clean() {
+	curs_set(1);
 	echo();
 	nocbreak();
 	endwin();
-
-	return 0;
 }
