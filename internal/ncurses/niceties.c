@@ -250,3 +250,10 @@ void b_rect_clear(BorderedRect* brect) {
 	rect_clear(&brect->outer);
 	rect_clear(&brect->inner);
 }
+
+Version get_ncurses_version() {
+	return (Version) {
+		.major = NCURSES_VERSION_MAJOR,
+		.minor = NCURSES_VERSION_MINOR,
+	};
+}

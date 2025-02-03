@@ -1,4 +1,4 @@
-IN = main.c niceties.c
+IN = main.c ../niceties.c
 OUT = main.o
 CFLAGS = -I/opt/homebrew/opt/ncurses/include -L/opt/homebrew/opt/ncurses/lib --std=c17 -Wall -lncurses
 

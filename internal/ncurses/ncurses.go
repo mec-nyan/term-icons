@@ -5,10 +5,12 @@ import (
 	"unsafe"
 )
 
-// #cgo LDFLAGS: -lcurses
+// #cgo CFLAGS: -I/opt/homebrew/opt/ncurses/include --std=c17 -Wall
+// #cgo LDFLAGS: -L/opt/homebrew/opt/ncurses/lib -lncurses
 // #include <stdlib.h>
-// #include<locale.h>
+// #include <locale.h>
 // #include <curses.h>
+// #include "niceties.h"
 import "C"
 
 const (
@@ -38,6 +40,13 @@ func SetLocale(category int, locale string) (string, error) {
 	}
 
 	return lc, nil
+}
+
+func GetNcursesVersion() (major, minor int) {
+	version := C.get_ncurses_version()
+	major = int(version.major)
+	minor = int(version.minor)
+	return
 }
 
 // Encapsulate the C.WINDOW* here:
@@ -74,22 +83,7 @@ func (w Window) Box() {
 }
 
 func (w Window) RoundedBox() {
-	topleft := "╭"
-	botleft := "╰"
-	topright := "╮"
-	botright := "╯"
-	C.box(w.win, 0, 0)
-	w.Move(0, 0)
-	w.AddStr(topleft)
-
-	w.Move(0, w.Width-1)
-	w.AddStr(topright)
-
-	w.Move(w.Height-1, 0)
-	w.AddStr(botleft)
-
-	w.Move(w.Height-1, w.Width-1)
-	w.AddStr(botright)
+	C.rounded_box(w.win)
 }
 
 func (w Window) AddStr(s string) {

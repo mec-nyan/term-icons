@@ -1,4 +1,4 @@
-#include "niceties.h"
+#include "../niceties.h"
 #include <stdlib.h>
 #include <curses.h>
 #include <locale.h>

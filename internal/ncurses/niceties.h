@@ -84,3 +84,9 @@ extern BorderStyle border_fat;
 extern BorderStyle border_fat_dotted;
 
 extern BorderStyle border_double;
+
+typedef struct {
+	int major, minor;
+} Version;
+
+Version get_ncurses_version();
